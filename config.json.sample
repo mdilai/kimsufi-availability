@@ -1,10 +1,17 @@
 {
 	"email": {
-		"host": "smtp.mailgun.org",
+		"host": "smtp.mandrillapp.com",
 		"port": 587,
 		"username": "",
 		"password": "",
 		"mail_from": "",
 		"mail_to": ""
+	},
+	
+	"sms": {
+		"account_sid": "",
+		"auth_token": "",
+		"sms_to": "",
+		"sms_from": ""
 	}
 }

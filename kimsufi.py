@@ -12,11 +12,13 @@ Options:
   -h, --help     Show this help.
   -v, --version  Show version.
   -m, --mail     Sends a mail when a server is available.
+  -s, --sms      Sends an SMS when a servier is avaliable.
 
 Examples:
   kimsufi.py
   kimsufi.py KS-1 KS-3
   kimsufi.py KS-1 --mail
+  kimsufi.py KS-2 --sms --mail
 """
 
 import sys
@@ -27,6 +29,9 @@ import json
 import os
 
 from docopt import docopt
+
+import twilio
+import twilio.rest
 
 VERSION = "1.0"
 
@@ -99,7 +104,6 @@ def get_servers(models):
 
     return [k for k in response if any(r == k['reference'] for r in search)]
 
-
 def get_ref(name):
     """Return the reference based on the server model."""
 
@@ -116,7 +120,6 @@ def send_mail(output, total):
             mail_password = config['email']['password']
             mail_from = config['email']['mail_from']
             mail_to = config['email']['mail_to']
-
     except IOError:
         print('Rename config.json.sample to config.json and edit it')
         return False
@@ -158,6 +161,27 @@ def send_mail(output, total):
     finally:
         server.close()
 
+def send_sms(output):
+    try:
+        with open(os.path.join(CURRENT_PATH, 'config.json')) as data:
+            config = json.load(data)
+            account_sid = config['sms']['account_sid']
+            auth_token = config['sms']['auth_token']
+            sms_to = config['sms']['sms_to']
+            sms_from = config['sms']['sms_from']
+
+    except IOError:
+        print('Rename config.json.sample to config.json and edit it')
+        return False
+
+    try:
+        client = twilio.rest.TwilioRestClient(account_sid, auth_token)
+        message = client.messages.create(body=output, to=sms_to, from_=sms_from)
+        print (message.sid)
+        return True
+    except twilio.TwilioRestException as e:
+        print (e)
+        return False
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version=VERSION)
@@ -175,17 +199,24 @@ if __name__ == '__main__':
             availability = z['availability']
             if not availability in invalids:
                 total += 1
-            output += '{} : {}\n'.format(get_zone_name(z['zone']), availability)
+                output += '{} : {}\n'.format(get_zone_name(z['zone']), availability)
 
     output += "\n=======\nRESULT : {0} server{1} {2} available on Kimsufi\n=======\n".format(
         total,
         "s"[total <= 1:],
         ["is", "are"][total > 1]
     )
+    for i in kim:
+        reference = i['reference']
+        name = REFERENCES[i['reference']]
+        if name.startswith("KS"):
+	        output += "\nOrder %s - https://www.kimsufi.com/en/order/kimsufi.cgi?hard=%s" % (name,reference)
+        else:
+                output += "\nOrder %s - https://eu.soyoustart.com/ie/cgi-bin/newOrder/order.cgi?hard=%s" % (name,reference)
 
     if total != 0:
         if arguments['--mail']:
-            print(output)
             send_mail(output, total)
-        else:
-            print(output)
+        if arguments['--sms']:
+            send_sms(output)
+        print(output)
