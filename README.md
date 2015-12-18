@@ -2,6 +2,7 @@
 
 Kimsufi servers are very interesting but extremely difficult to obtain. This script parses the OVH API and sends you a mail and/or SMS when a server is available.
 Based on https://github.com/ncrocfer/kimsufi-availability
+
 Detailed usage guide at https://quotehex.com/how-to-guaranteed-quickly-get-kimsufi-server/
 
 ## Usage
